@@ -64,9 +64,9 @@ def find_food(data, graph, risk_heads = True):
   sy = start['y']
 
   if risk_heads == False:
-    # block off squares near bigger enemy snake's heads
+    # block off adjacent squares near bigger enemy snake's
     my_size = len(data['you']['body'])
-    for snake in data['snakes']:
+    for snake in data['board']['snakes']:
       if snake['id'] == data['you']['id']:
         continue
       # ignore smaller snakes
@@ -78,7 +78,9 @@ def find_food(data, graph, risk_heads = True):
         ny = snake['head']['y'] + dy[d]
         if nx < 0 or ny < 0 or nx == w or ny == h:
           continue
-        graph[ny][ny].char = '#'
+        if abs(nx-sx) + abs(ny-sy) > 1:
+          continue
+        graph[ny][nx].char = '#'
 
   q = deque()
   q.append(sy)
@@ -132,9 +134,13 @@ class EatBot(Bot):
     # BFS on the graph being careful
     graph = make_graph(h,w,board)
     best_food = find_food(data, graph, risk_heads = False)
-    if best_food == (-1,-1):
+    if best_food == (-1,-1) and data['you']['health'] <= (h+w)//1.47:
       graph = make_graph(h,w,board)
       best_food = find_food(data,graph, risk_heads = True)
+
+
+    sy = data['you']['head']['y']
+    sx = data['you']['head']['x']
 
     # we found food, go to it
     if best_food != (-1,-1):
@@ -144,6 +150,15 @@ class EatBot(Bot):
     else: # we didn't find any food, survive
 
       # move to a neighboring empty square
+      for d in range(4):
+        nx = sx + dx[d]
+        ny = sy + dy[d]
+        if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
+          continue
+        return dir_to_word[d]
+      # didn't find empty square - try risking heads
+
+      graph = make_graph(h,w,board)
       for d in range(4):
         nx = sx + dx[d]
         ny = sy + dy[d]
