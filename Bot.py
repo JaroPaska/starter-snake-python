@@ -49,7 +49,7 @@ def make_graph(h,w,board): # given board makes empty graph
     graph[ f['y'] ][ f['x'] ].char = 'o'
 
   for s in board['snakes']:
-    for pt in s['body']:
+    for pt in s['body'][:-1]:
       graph[ pt['y'] ][ pt['x'] ].char = '#'
   return graph
 
