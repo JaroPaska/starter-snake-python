@@ -42,6 +42,78 @@ class node():
     self.dist = UNREACHABLE # distance from my head
     self.src = -1 # which direction was used to reach this square
 
+def make_graph(h,w,board): # given board makes empty graph
+  graph = [ [ node() for _ in range(w)] for _ in range(h)]
+
+  for f in board['food']:
+    graph[ f['y'] ][ f['x'] ].char = 'o'
+
+  for s in board['snakes']:
+    for pt in s['body']:
+      graph[ pt['y'] ][ pt['x'] ].char = '#'
+  return graph
+
+# modifies graph with dist/src, returns closest found food
+# if risk_heads = False, treat squares next to bigger enemy snake heads as blocked
+def find_food(data, graph, risk_heads = True):
+  h = data['board']['height']
+  w = data['board']['width']
+
+  start = data['you']['head']
+  sx = start['x']
+  sy = start['y']
+
+  if risk_heads == False:
+    # block off squares near bigger enemy snake's heads
+    my_size = len(data['you']['body'])
+    for snake in data['snakes']:
+      if snake['id'] == data['you']['id']:
+        continue
+      # ignore smaller snakes
+      if len(snake['body']) < my_size:
+        continue
+
+      for d in range(4):
+        nx = snake['head']['x'] + dx[d]
+        ny = snake['head']['y'] + dy[d]
+        if nx < 0 or ny < 0 or nx == w or ny == h:
+          continue
+        graph[ny][ny].char = '#'
+
+  q = deque()
+  q.append(sy)
+  q.append(sx)
+
+  graph[sy][sx].dist = 0
+
+  best_food_distance = UNREACHABLE
+  best_food = (-1,-1)
+
+  while len(q):
+    y = q.popleft()
+    x = q.popleft()
+
+    # try all moves
+    for d in range(4):
+      nx = x + dx[d]
+      ny = y + dy[d]
+
+      # ignore bad squares
+      if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#' or graph[ny][nx].dist != UNREACHABLE:
+        continue
+
+      graph[ny][nx].dist = graph[y][x].dist + 1
+      graph[ny][nx].src = d
+
+      q.append(ny)
+      q.append(nx)
+
+      if graph[ny][nx].char == 'o' and best_food_distance == UNREACHABLE:
+        best_food_distance = graph[ny][nx].dist
+        best_food = (ny,nx)
+
+  return best_food
+
 class EatBot(Bot):
 
   def __init__(self):
@@ -57,54 +129,12 @@ class EatBot(Bot):
     h = board['height']
     w = board['width']
 
-    # set graph
-
-    graph = [ [ node() for _ in range(w)] for _ in range(h)]
-
-    for f in board['food']:
-      graph[ f['y'] ][ f['x'] ].char = 'o'
-
-    for s in board['snakes']:
-      for pt in s['body']:
-        graph[ pt['y'] ][ pt['x'] ].char = '#'
-
-    # BFS on the graph
-
-    start = data['you']['head']
-    sx = start['x']
-    sy = start['y']
-
-    q = deque()
-    q.append(sy)
-    q.append(sx)
-
-    graph[sy][sx].dist = 0
-
-    best_food_distance = UNREACHABLE
-    best_food = (-1,-1)
-
-    while len(q):
-      y = q.popleft()
-      x = q.popleft()
-
-      # try all moves
-      for d in range(4):
-        nx = x + dx[d]
-        ny = y + dy[d]
-
-        # ignore bad squares
-        if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#' or graph[ny][nx].dist != UNREACHABLE:
-          continue
-
-        graph[ny][nx].dist = graph[y][x].dist + 1
-        graph[ny][nx].src = d
-
-        q.append(ny)
-        q.append(nx)
-
-        if graph[ny][nx].char == 'o' and best_food_distance == UNREACHABLE:
-          best_food_distance = graph[ny][nx].dist
-          best_food = (ny,nx)
+    # BFS on the graph being careful
+    graph = make_graph(h,w,board)
+    best_food = find_food(data, graph, risk_heads = False)
+    if best_food == (-1,-1):
+      graph = make_graph(h,w,board)
+      best_food = find_food(data,graph, risk_heads = True)
 
     # we found food, go to it
     if best_food_distance != UNREACHABLE:
