@@ -8,8 +8,10 @@ This is a simple Battlesnake server written in Python.
 For instructions see https://github.com/BattlesnakeOfficial/starter-snake-python/README.md
 """
 
+from Bot import Bot
 
 class Battlesnake(object):
+
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def index(self):
@@ -18,7 +20,7 @@ class Battlesnake(object):
         # TIP: If you open your Battlesnake URL in browser you should see this data
         return {
             "apiversion": "1",
-            "author": "",  # TODO: Your Battlesnake Username
+            "author": "Hodobox",  # TODO: Your Battlesnake Username
             "color": "#888888",  # TODO: Personalize
             "head": "default",  # TODO: Personalize
             "tail": "default",  # TODO: Personalize
@@ -30,6 +32,8 @@ class Battlesnake(object):
         # This function is called everytime your snake is entered into a game.
         # cherrypy.request.json contains information about the game that's about to be played.
         data = cherrypy.request.json
+
+        self.bot = Bot()
 
         print("START")
         return "ok"
@@ -43,11 +47,7 @@ class Battlesnake(object):
         # TODO: Use the information in cherrypy.request.json to decide your next move.
         data = cherrypy.request.json
 
-        # Choose a random direction to move in
-        possible_moves = ["up", "down", "left", "right"]
-        move = random.choice(possible_moves)
-
-        print(f"MOVE: {move}")
+        move = self.bot.move(data)
         return {"move": move}
 
     @cherrypy.expose
