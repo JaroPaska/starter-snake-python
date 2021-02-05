@@ -137,7 +137,7 @@ class EatBot(Bot):
       best_food = find_food(data,graph, risk_heads = True)
 
     # we found food, go to it
-    if best_food_distance != UNREACHABLE:
+    if best_food != (-1,-1):
       while move_square(best_food, opp( graph[ best_food[0] ][ best_food[1] ].src ) ) != (sy,sx):
         best_food = move_square(best_food, opp( graph[ best_food[0] ][ best_food[1] ].src ) )
       return dir_to_word[ graph[ best_food[0] ][best_food[1]].src ]
