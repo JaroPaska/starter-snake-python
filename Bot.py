@@ -33,9 +33,7 @@ def opp(d):
   return (d+2)%4
 
 def move_square(square, d):
-  res = (0,0)
-  res[0] = square[0] + dy[d]
-  res[1] = square[1] + dx[d]
+  res = (square[0]+dy[d],square[1]+dx[d])
   return res
 
 class node():
@@ -56,15 +54,15 @@ class EatBot(Bot):
     board = data['board']
     myID = data['you']['id']
 
-    h = data['height']
-    w = data['width']
+    h = board['height']
+    w = board['width']
 
     # set graph
 
     graph = [ [ node() for _ in range(w)] for _ in range(h)]
 
     for f in board['food']:
-      graph[ food['y'] ][ food['x'] ].char = 'o'
+      graph[ f['y'] ][ f['x'] ].char = 'o'
 
     for s in board['snakes']:
       for pt in s['body']:
