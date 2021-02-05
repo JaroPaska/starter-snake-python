@@ -8,7 +8,9 @@ This is a simple Battlesnake server written in Python.
 For instructions see https://github.com/BattlesnakeOfficial/starter-snake-python/README.md
 """
 
-from Bot import Bot
+import Bot
+
+bot_arg = 'Bot'
 
 class Battlesnake(object):
 
@@ -33,7 +35,7 @@ class Battlesnake(object):
         # cherrypy.request.json contains information about the game that's about to be played.
         data = cherrypy.request.json
 
-        self.bot = Bot()
+        self.bot = getattr(Bot,bot_arg)()
 
         print("START")
         return "ok"
@@ -60,8 +62,9 @@ class Battlesnake(object):
         print("END")
         return "ok"
 
-
+import sys
 if __name__ == "__main__":
+    bot_arg = sys.argv[1]
     server = Battlesnake()
     cherrypy.config.update({"server.socket_host": "0.0.0.0"})
     cherrypy.config.update(
