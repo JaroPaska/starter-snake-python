@@ -51,9 +51,36 @@ def make_graph(h,w,board): # given board makes empty graph
     graph[ f['y'] ][ f['x'] ].char = 'o'
 
   for s in board['snakes']:
-    for pt in s['body']:
+    for pt in s['body'][:-1]:
       graph[ pt['y'] ][ pt['x'] ].char = '#'
   return graph
+
+# counts connected free space from (sy,sx)
+def count_space(graph, sy, sx):
+  seen = set()
+  q = deque()
+  q.append(sy)
+  q.append(sx)
+  seen.add((sy,sx))
+
+  space = 1
+
+  while len(q):
+    y = q.popleft()
+    x = q.popleft()
+
+    for d in range(4):
+      ny = y + dy[d]
+      nx = x + dx[d]
+      if ny < 0 or nx < 0 or ny == h or nx == w or graph[ny][nx].char == '#' or (ny,nx) in seen:
+        continue
+      space += 1
+      q.append(ny)
+      q.append(nx)
+      seen.add((ny,nx))
+
+  return space
+
 
 # modifies graph with dist/src, returns closest found food
 # if risk_heads = False, treat squares next to bigger enemy snake heads as blocked
@@ -152,25 +179,24 @@ class EatBot(Bot):
       return dir_to_word[ graph[ best_food[0] ][best_food[1]].src ]
     else: # we didn't find any food, survive
 
-      # move to a neighboring empty square
-      for d in range(4):
-        nx = sx + dx[d]
-        ny = sy + dy[d]
-        if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
-          continue
-        return dir_to_word[d]
-      # didn't find empty square - try risking heads
-
       graph = make_graph(h,w,board)
-      for d in range(4):
-        nx = sx + dx[d]
-        ny = sy + dy[d]
-        if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
-          continue
-        return dir_to_word[d]
 
-      # didn't find empty square, guess I'll die
-      return "up"
+      biggest_component = 0
+      best_dir = 0
+
+      for d in range(4):
+        ny = sy + dy[d]
+        nx = sx + dx[d]
+        if ny < 0 or nx < 0 or nx == w or ny == w or graph[ny][nx].char == '#':
+          continue
+
+        comp_size = count_space(graph, ny, nx)
+        if comp_size > biggest_component:
+          biggest_component = comp_size
+          best_dir = d
+
+        return dir_to_word[best_dir]
+
 
 action_name = ['up', 'down', 'right', 'left']
 action_dir = [(0, 1), (0, -1), (1, 0), (-1, 0)]
