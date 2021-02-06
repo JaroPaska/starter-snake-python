@@ -181,6 +181,10 @@ class GravityBot(Bot):
 
   def evaluate(self, graph, data, y, x):
     val = None
+
+    if y < 0 or x < 0 or y == data['board']['height'] or x == data['board']['width']:
+      return list(self.BLOCKED)
+
     if graph[y][x].char == '.':
       val = self.EMPTY
     elif graph[y][x].char == 'o':
