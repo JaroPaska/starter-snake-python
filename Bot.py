@@ -173,11 +173,11 @@ class EatBot(Bot):
 class GravityBot(Bot):
 
   def __init__(self):
-    self.EMPTY = (1,-0.1)
-    self.FOOD = (5,-0.05)
+    self.EMPTY = (1,-0.05)
+    self.FOOD = (5,-0.25)
     self.TAIL = (0.1,-0.1)
-    self.BIGGER_HEAD = (-30,28)
-    self.BLOCKED = (-0.2,0.15)
+    self.BIGGER_HEAD = (-999,975)
+    self.BLOCKED = (-999,998.9)
 
   def evaluate(self, graph, data, y, x):
     val = None
@@ -189,7 +189,9 @@ class GravityBot(Bot):
       val = self.EMPTY
     elif graph[y][x].char == 'o':
       val = list(self.FOOD)
-      val[0] += (1.01**(3*(100-data['you']['health'])))
+      val[0] += (1.01**(5*(100-data['you']['health'])))
+      val[1] = (self.FOOD[1] / self.FOOD[0]) * val[0]
+      #print('food is ',val)
     else:
       # head or tail
       my_size = len(data['you']['body'])
@@ -201,7 +203,7 @@ class GravityBot(Bot):
         if snake['id'] == data['you']['id'] or len(snake['body']) < my_size:
           continue
 
-        if (x,y) == (snake['body'][0]['x'],snake['body'][1]['y']):
+        if (x,y) == (snake['body'][0]['x'],snake['body'][0]['y']):
           val = self.BIGGER_HEAD
           break
 
@@ -228,7 +230,13 @@ class GravityBot(Bot):
       if nx < 0 or ny < 0 or nx >= w or ny >= h or graph[ny][nx].char == '#':
         continue
 
-      tmp[ny][nx] = val
+      new_val = val[::]
+      new_val[0] += new_val[1]
+
+      if new_val[0] * val[0] <= 0:
+        continue
+
+      tmp[ny][nx] = new_val
       q.append(ny)
       q.append(nx)
 
@@ -244,7 +252,7 @@ class GravityBot(Bot):
         if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#' or tmp[ny][nx] != [0,0]:
           continue
 
-        new_val = tmp[y][x]
+        new_val = tmp[y][x][::]
         new_val[0] += new_val[1]
 
         if new_val[0] * tmp[y][x][0] <= 0:
@@ -280,6 +288,13 @@ class GravityBot(Bot):
     best = -10000
     best_dir = 0
 
+    # for y in range(h-1,-1,-1):
+    #   for x in range(w):
+    #     if y == sy and x == sx:
+    #       print('H',end='')
+    #     print("{:.1f}".format(ratings[y][x]),end='\t')
+    #   print()
+
     for d in range(4):
       nx = sx + dx[d]
       ny = sy + dy[d]
@@ -289,5 +304,7 @@ class GravityBot(Bot):
       if ratings[ny][nx] > best:
         best = ratings[ny][nx]
         best_dir = d
+    
+    #print(best_dir, dir_to_word[best_dir])
 
     return dir_to_word[best_dir]
