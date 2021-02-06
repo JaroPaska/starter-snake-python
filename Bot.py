@@ -179,6 +179,7 @@ class GravityBot(Bot):
     self.BIGGER_HEAD = (-30,28)
     self.BLOCKED = (-0.2,0.15)
 
+  @staticmethod
   def evaluate(graph, data, y, x):
     val = None
     if graph[y][x].char == '.':
@@ -206,6 +207,7 @@ class GravityBot(Bot):
 
     return list(val)
 
+  @staticmethod
   def propagate_gravity(graph, data, ratings, sy, sx):
 
     val = evaluate(graph, data, sy, sx)
