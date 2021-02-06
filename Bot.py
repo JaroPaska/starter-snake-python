@@ -84,7 +84,7 @@ def count_space(graph, sy, sx):
 def add_heads(data, graph):
   # block off adjacent squares near bigger enemy snake's
   w = data['board']['width']
-  y = data['board']['height']
+  h = data['board']['height']
   my_size = len(data['you']['body'])
   sx = data['you']['head']['x']
   sy = data['you']['head']['y']
