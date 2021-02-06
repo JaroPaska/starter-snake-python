@@ -81,6 +81,28 @@ def count_space(graph, sy, sx):
 
   return space
 
+def add_heads(data, graph):
+  # block off adjacent squares near bigger enemy snake's
+  w = data['board']['width']
+  y = data['board']['height']
+  my_size = len(data['you']['body'])
+  sx = data['you']['head']['x']
+  sy = data['you']['head']['y']
+  for snake in data['board']['snakes']:
+    if snake['id'] == data['you']['id']:
+      continue
+    # ignore smaller snakes
+    if len(snake['body']) < my_size:
+      continue
+
+    for d in range(4):
+      nx = snake['head']['x'] + dx[d]
+      ny = snake['head']['y'] + dy[d]
+      if nx < 0 or ny < 0 or nx == w or ny == h:
+        continue
+      if abs(nx-sx) + abs(ny-sy) > 1:
+        continue
+      graph[ny][nx].char = '#'
 
 # modifies graph with dist/src, returns closest found food
 # if risk_heads = False, treat squares next to bigger enemy snake heads as blocked
@@ -93,23 +115,7 @@ def find_food(data, graph, risk_heads = True):
   sy = start['y']
 
   if risk_heads == False:
-    # block off adjacent squares near bigger enemy snake's
-    my_size = len(data['you']['body'])
-    for snake in data['board']['snakes']:
-      if snake['id'] == data['you']['id']:
-        continue
-      # ignore smaller snakes
-      if len(snake['body']) < my_size:
-        continue
-
-      for d in range(4):
-        nx = snake['head']['x'] + dx[d]
-        ny = snake['head']['y'] + dy[d]
-        if nx < 0 or ny < 0 or nx == w or ny == h:
-          continue
-        if abs(nx-sx) + abs(ny-sy) > 1:
-          continue
-        graph[ny][nx].char = '#'
+    add_heads(data, graph)
 
   q = deque()
   q.append(sy)
@@ -180,10 +186,11 @@ class EatBot(Bot):
     else: # we didn't find any food, survive
 
       graph = make_graph(h,w,board)
+      add_heads(data, graph)
 
       biggest_component = 0
       best_dir = 0
-      print('survive at',sy,sx)
+      print('survive at with heads',sy,sx)
       for d in range(4):
         ny = sy + dy[d]
         nx = sx + dx[d]
@@ -195,6 +202,24 @@ class EatBot(Bot):
         if comp_size > biggest_component:
           biggest_component = comp_size
           best_dir = d
+
+      if biggest_component < min(data['you']['length']//2,10):
+        graph = make_graph(h,w,board)
+
+        biggest_component = 0
+        best_dir = 0
+        print('survive at no heads',sy,sx)
+        for d in range(4):
+          ny = sy + dy[d]
+          nx = sx + dx[d]
+          if ny < 0 or nx < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
+            continue
+
+          comp_size = count_space(graph, ny, nx)
+          print(d,comp_size)
+          if comp_size > biggest_component:
+            biggest_component = comp_size
+            best_dir = d
 
       return dir_to_word[best_dir]
 
