@@ -22,10 +22,10 @@ class Battlesnake(object):
         # TIP: If you open your Battlesnake URL in browser you should see this data
         return {
             "apiversion": "1",
-            "author": "Hodobox",  # TODO: Your Battlesnake Username
-            "color": "#064A89",  # TODO: Personalize
-            "head": "rudolph",  # TODO: Personalize
-            "tail": "present",  # TODO: Personalize
+            "author": "Phyrexian",  # TODO: Your Battlesnake Username
+            "color": "#008800",  # TODO: Personalize
+            "head": "default",  # TODO: Personalize
+            "tail": "default",  # TODO: Personalize
         }
 
     @cherrypy.expose
@@ -66,9 +66,9 @@ import sys
 if __name__ == "__main__":
     bot_arg = sys.argv[1]
     server = Battlesnake()
-    cherrypy.config.update({"server.socket_host": "0.0.0.0"})
+    cherrypy.config.update({"server.socket_host": "192.168.0.128"})
     cherrypy.config.update(
-        {"server.socket_port": int(os.environ.get("PORT", "8080")),}
+        {"server.socket_port": int(os.environ.get("PORT", "55822")),}
     )
     print("Starting Battlesnake Server...")
     cherrypy.quickstart(server)

@@ -372,23 +372,21 @@ class MonteCarloBot(Bot):
         return self.play_out(gs, depth - 1, idn)
 
     def move(self, data):
+        return 'right'
         idn = data['you']['id']
         wins = [0, 0, 0, 0]
         counts = [0, 0, 0, 0]
-        for _ in range(50):
+        for _ in range(500):
             first_move = random.randint(0, 3)
             result = self.play_out(GameState.from_data(data), 50, idn, first_move)
             wins[first_move] += result
             counts[first_move] += 1
 
         wr = [-1 if counts[i] == 0 else wins[i] / counts[i] for i in range(4)]
-        print(wr)
         best = wr.index(max(wr))
         return action_name[best]
 
-
-'''
-data = {
+'''data = {
     'board': {
         'height': 11,
         'width': 11,
@@ -420,10 +418,11 @@ data = {
     }
 }
 
-gs = GameState.from_data(data)
+import time
 bot = MonteCarloBot()
+start = time.time()
 print(bot.move(data))
-'''
+print(time.time() - start)'''
         
 class GravityBot(Bot):
 
