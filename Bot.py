@@ -228,9 +228,11 @@ class GameState:
                 points.add((x, y))
         for snake in self.snakes:
             for point in snake.body:
-                points.remove(point)
+                if point in points:
+                    points.remove(point)
         for point in self.foods:
-            points.remove(point)
+            if point in points:
+                points.remove(point)
         return points
 
     def spawn_food(self, n):
@@ -279,7 +281,20 @@ class GameState:
         self.snakes = [snake for snake, elim in zip(self.snakes, elims) if not elim]
 
     def ok_moves(self):
-        return [[0, 1, 2, 3] for _ in range(len(self.snakes))]
+        moves = []
+        for snake in self.snakes:
+            ok = [True] * 4
+            for action in range(4):
+                dest = tuple(map(operator.add, snake.body[0], action_dir[action]))
+                if self.out_of_bounds(dest):
+                    ok[action] = False
+                for other in self.snakes:
+                    if dest in other.body[0:-1]:
+                        ok[action] = False
+            if not any(ok):
+                ok[0] = True
+            moves.append([action for action in range(4) if ok[action]])  
+        return moves
 
 class MonteCarloBot(Bot):
     def play_out(self, gs, preset=[]):
@@ -289,8 +304,8 @@ class MonteCarloBot(Bot):
             return None
         
         moves = gs.ok_moves()
-        for move in moves:
-            move = random.choice(move)
+        for i in range(len(moves)):
+            moves[i] = random.choice(moves[i])
         
         for idn, move in preset:
             for i, snake in enumerate(gs.snakes):
@@ -304,23 +319,56 @@ class MonteCarloBot(Bot):
         im = data['you']['id']
         wins = [0, 0, 0, 0]
         counts = [0, 0, 0, 0]
-        for _ in range(10000):
+        for _ in range(2000):
             first_move = random.randint(0, 3)
             winner = self.play_out(GameState.from_data(data), [(im, first_move)])
             if winner == im:
                 wins[first_move] += 1
             counts[first_move] += 1
 
-        best = 0
-        for i in range(1, 4):
-            if wins[i] * counts[best] > wins[best] * counts[i]:
-                best = i
-        return {'move': action_name[best]}
+        wr = [-1 if counts[i] == 0 else wins[i] / counts[i] for i in range(4)]
+        print(wr)
+        best = wr.index(max(wr))
+        return action_name[best]
 
 
+'''
+data = {
+    'board': {
+        'height': 11,
+        'width': 11,
+        'food': [
+            {'x': 0, 'y': 0},
+        ],
+        'snakes': [
+            {
+                'id': 'me',
+                'health': 3,
+                'body': [
+                    {'x': 1, 'y': 0},
+                    {'x': 2, 'y': 0},
+                    {'x': 3, 'y': 0}
+                ]
+            }, {
+                'id': 'him',
+                'health': 100,
+                'body': [
+                    {'x': 1, 'y': 5},
+                    {'x': 2, 'y': 5},
+                    {'x': 3, 'y': 5}
+                ]
+            }
+        ]
+    },
+    'you': {
+        'id': 'me'
+    }
+}
 
-
-     
+gs = GameState.from_data(data)
+bot = MonteCarloBot()
+print(bot.move(data))
+'''
         
 class GravityBot(Bot):
 
