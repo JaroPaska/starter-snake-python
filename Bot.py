@@ -247,8 +247,8 @@ class GravityBot(Bot):
           continue
 
         tmp[ny][nx] = new_val
-        q.push(ny)
-        q.push(nx)
+        q.append(ny)
+        q.append(nx)
 
     for y in range(0,h):
       for x in range(0,w):
