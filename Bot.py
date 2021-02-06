@@ -172,7 +172,6 @@ class EatBot(Bot):
       # didn't find empty square, guess I'll die
       return "up"
 
-<<<<<<< HEAD
 action_name = ['up', 'down', 'right', 'left']
 action_dir = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
@@ -270,7 +269,8 @@ class GameState:
                     elim = True
             elims.append(elim)
         self.snakes = [snake for snake, elim in zip(self.snakes, elims) if not elim]
-=======
+     
+        
 class GravityBot(Bot):
 
   def __init__(self):
@@ -392,4 +392,3 @@ class GravityBot(Bot):
         best_dir = d
 
     return dir_to_word[best_dir]
->>>>>>> d42bb16c4bd0206fcfb44fa54b623a4dbd6f4728
