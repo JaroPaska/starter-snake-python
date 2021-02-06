@@ -225,7 +225,7 @@ class GravityBot(Bot):
     for d in range(4):
       nx = sx + dx[d]
       ny = sy + dy[d]
-      if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
+      if nx < 0 or ny < 0 or nx >= w or ny >= h or graph[ny][nx].char == '#':
         continue
 
       tmp[ny][nx] = val
