@@ -51,9 +51,58 @@ def make_graph(h,w,board): # given board makes empty graph
     graph[ f['y'] ][ f['x'] ].char = 'o'
 
   for s in board['snakes']:
-    for pt in s['body']:
+    for pt in s['body'][:-1]:
       graph[ pt['y'] ][ pt['x'] ].char = '#'
   return graph
+
+# counts connected free space from (sy,sx)
+def count_space(graph, sy, sx):
+  seen = set()
+  q = deque()
+  q.append(sy)
+  q.append(sx)
+  seen.add((sy,sx))
+
+  space = 1
+
+  while len(q):
+    y = q.popleft()
+    x = q.popleft()
+
+    for d in range(4):
+      ny = y + dy[d]
+      nx = x + dx[d]
+      if ny < 0 or nx < 0 or ny == len(graph) or nx == len(graph[0]) or graph[ny][nx].char == '#' or (ny,nx) in seen:
+        continue
+      space += 1
+      q.append(ny)
+      q.append(nx)
+      seen.add((ny,nx))
+
+  return space
+
+def add_heads(data, graph):
+  # block off adjacent squares near bigger enemy snake's
+  w = data['board']['width']
+  h = data['board']['height']
+  my_size = len(data['you']['body'])
+  sx = data['you']['head']['x']
+  sy = data['you']['head']['y']
+  for snake in data['board']['snakes']:
+    if snake['id'] == data['you']['id']:
+      continue
+    # ignore smaller snakes
+    if len(snake['body']) < my_size:
+      continue
+
+    for d in range(4):
+      nx = snake['head']['x'] + dx[d]
+      ny = snake['head']['y'] + dy[d]
+      if nx < 0 or ny < 0 or nx == w or ny == h:
+        continue
+      if abs(nx-sx) + abs(ny-sy) > 1:
+        continue
+      graph[ny][nx].char = '#'
 
 # modifies graph with dist/src, returns closest found food
 # if risk_heads = False, treat squares next to bigger enemy snake heads as blocked
@@ -66,23 +115,7 @@ def find_food(data, graph, risk_heads = True):
   sy = start['y']
 
   if risk_heads == False:
-    # block off adjacent squares near bigger enemy snake's
-    my_size = len(data['you']['body'])
-    for snake in data['board']['snakes']:
-      if snake['id'] == data['you']['id']:
-        continue
-      # ignore smaller snakes
-      if len(snake['body']) < my_size:
-        continue
-
-      for d in range(4):
-        nx = snake['head']['x'] + dx[d]
-        ny = snake['head']['y'] + dy[d]
-        if nx < 0 or ny < 0 or nx == w or ny == h:
-          continue
-        if abs(nx-sx) + abs(ny-sy) > 1:
-          continue
-        graph[ny][nx].char = '#'
+    add_heads(data, graph)
 
   q = deque()
   q.append(sy)
@@ -152,25 +185,44 @@ class EatBot(Bot):
       return dir_to_word[ graph[ best_food[0] ][best_food[1]].src ]
     else: # we didn't find any food, survive
 
-      # move to a neighboring empty square
-      for d in range(4):
-        nx = sx + dx[d]
-        ny = sy + dy[d]
-        if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
-          continue
-        return dir_to_word[d]
-      # didn't find empty square - try risking heads
-
       graph = make_graph(h,w,board)
-      for d in range(4):
-        nx = sx + dx[d]
-        ny = sy + dy[d]
-        if nx < 0 or ny < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
-          continue
-        return dir_to_word[d]
+      add_heads(data, graph)
 
-      # didn't find empty square, guess I'll die
-      return "up"
+      biggest_component = 0
+      best_dir = 0
+      print('survive at with heads',sy,sx)
+      for d in range(4):
+        ny = sy + dy[d]
+        nx = sx + dx[d]
+        if ny < 0 or nx < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
+          continue
+
+        comp_size = count_space(graph, ny, nx)
+        print(d,comp_size)
+        if comp_size > biggest_component:
+          biggest_component = comp_size
+          best_dir = d
+
+      if biggest_component < min(data['you']['length']//2,10):
+        graph = make_graph(h,w,board)
+
+        biggest_component = 0
+        best_dir = 0
+        print('survive at no heads',sy,sx)
+        for d in range(4):
+          ny = sy + dy[d]
+          nx = sx + dx[d]
+          if ny < 0 or nx < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
+            continue
+
+          comp_size = count_space(graph, ny, nx)
+          print(d,comp_size)
+          if comp_size > biggest_component:
+            biggest_component = comp_size
+            best_dir = d
+
+      return dir_to_word[best_dir]
+
 
 action_name = ['up', 'down', 'right', 'left']
 action_dir = [(0, 1), (0, -1), (1, 0), (-1, 0)]
