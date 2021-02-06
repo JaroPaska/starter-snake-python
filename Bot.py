@@ -176,9 +176,13 @@ action_name = ['up', 'down', 'right', 'left']
 action_dir = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
 class Snake:
-    def __init__(self, health, body):
+    def __init__(self, idn, health, body):
+        self.idn = idn
         self.health = health
         self.body = body
+
+    def __repr__(self):
+        return 'Snake[idn=' + self.idn + ', health=' + str(self.health) + ', body=' + str(self.body) + ']'
 
 class GameState:
     def __init__(self, width=11, height=11, snake_max_hp=100, snake_start_size=3, food_chance=15, min_food=1):
@@ -190,6 +194,9 @@ class GameState:
         self.snakes = []
         self.foods = set()
 
+    def __repr__(self):
+        return 'GameState[snakes=' + str(self.snakes) + ', foods=' + str(self.foods) + ']'
+
     @staticmethod
     def from_data(data):
         board = data['board']
@@ -199,11 +206,12 @@ class GameState:
             gs.foods.add((food['x'], food['y']))
         snakes = board['snakes']
         for snake in snakes:
+            idn = snake['id']
             health = snake['health']
             body = []
             for point in snake['body']:
                 body.append((point['x'], point['y']))
-            gs.snakes.append(Snake(health=health, body=body))
+            gs.snakes.append(Snake(idn=idn, health=health, body=body))
         return gs
 
     def out_of_bounds(self, pos):
@@ -213,7 +221,7 @@ class GameState:
             return True
         return False
 
-    def get_unoccupied(self):
+    def unoccupied(self):
         points = set()
         for x in range(self.dims[0]):
             for y in range(self.dims[1]):
@@ -227,7 +235,7 @@ class GameState:
 
     def spawn_food(self, n):
         for _ in range(n):
-            unoccupied = list(self.get_unoccupied())
+            unoccupied = list(self.unoccupied())
             if len(unoccupied) > 0:
                 food = unoccupied[random.randint(0, len(unoccupied) - 1)]
                 self.foods.add(food)
@@ -269,6 +277,49 @@ class GameState:
                     elim = True
             elims.append(elim)
         self.snakes = [snake for snake, elim in zip(self.snakes, elims) if not elim]
+
+    def ok_moves(self):
+        return [[0, 1, 2, 3] for _ in range(len(self.snakes))]
+
+class MonteCarloBot(Bot):
+    def play_out(self, gs, preset=[]):
+        if len(gs.snakes) == 1:
+            return gs.snakes[0].idn
+        if len(gs.snakes) == 0:
+            return None
+        
+        moves = gs.ok_moves()
+        for move in moves:
+            move = random.choice(move)
+        
+        for idn, move in preset:
+            for i, snake in enumerate(gs.snakes):
+                if snake.idn == idn:
+                    moves[i] = move
+
+        gs.step(moves)
+        return self.play_out(gs)
+
+    def move(self, data):
+        im = data['you']['id']
+        wins = [0, 0, 0, 0]
+        counts = [0, 0, 0, 0]
+        for _ in range(10000):
+            first_move = random.randint(0, 3)
+            winner = self.play_out(GameState.from_data(data), [(im, first_move)])
+            if winner == im:
+                wins[first_move] += 1
+            counts[first_move] += 1
+
+        best = 0
+        for i in range(1, 4):
+            if wins[i] * counts[best] > wins[best] * counts[i]:
+                best = i
+        return {'move': action_name[best]}
+
+
+
+
      
         
 class GravityBot(Bot):
