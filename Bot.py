@@ -72,7 +72,7 @@ def count_space(graph, sy, sx):
     for d in range(4):
       ny = y + dy[d]
       nx = x + dx[d]
-      if ny < 0 or nx < 0 or ny == h or nx == w or graph[ny][nx].char == '#' or (ny,nx) in seen:
+      if ny < 0 or nx < 0 or ny == len(graph) or nx == len(graph[0]) or graph[ny][nx].char == '#' or (ny,nx) in seen:
         continue
       space += 1
       q.append(ny)
@@ -183,19 +183,20 @@ class EatBot(Bot):
 
       biggest_component = 0
       best_dir = 0
-
+      print('survive at',sy,sx)
       for d in range(4):
         ny = sy + dy[d]
         nx = sx + dx[d]
-        if ny < 0 or nx < 0 or nx == w or ny == w or graph[ny][nx].char == '#':
+        if ny < 0 or nx < 0 or nx == w or ny == h or graph[ny][nx].char == '#':
           continue
 
         comp_size = count_space(graph, ny, nx)
+        print(d,comp_size)
         if comp_size > biggest_component:
           biggest_component = comp_size
           best_dir = d
 
-        return dir_to_word[best_dir]
+      return dir_to_word[best_dir]
 
 
 action_name = ['up', 'down', 'right', 'left']
