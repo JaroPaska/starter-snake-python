@@ -1,4 +1,6 @@
+import operator
 import random
+
 from collections import deque
 
 class Bot():
@@ -168,3 +170,101 @@ class EatBot(Bot):
 
       # didn't find empty square, guess I'll die
       return "up"
+
+action_name = ['up', 'down', 'right', 'left']
+action_dir = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+
+class Snake:
+    def __init__(self, health, body):
+        self.health = health
+        self.body = body
+
+class GameState:
+    def __init__(self, width=11, height=11, snake_max_hp=100, snake_start_size=3, food_chance=15, min_food=1):
+        self.dims = (width, height)
+        self.snake_max_hp = snake_max_hp
+        self.snake_start_size = snake_start_size
+        self.food_chance = food_chance
+        self.min_food = min_food
+        self.snakes = []
+        self.foods = set()
+
+    @staticmethod
+    def from_data(data):
+        board = data['board']
+        gs = GameState(width=board['width'], height=board['height'])
+        foods = board['food']
+        for food in foods:
+            gs.foods.add((food['x'], food['y']))
+        snakes = board['snakes']
+        for snake in snakes:
+            health = snake['health']
+            body = []
+            for point in snake['body']:
+                body.append((point['x'], point['y']))
+            gs.snakes.append(Snake(health=health, body=body))
+        return gs
+
+    def out_of_bounds(self, pos):
+        if pos[0] < 0 or pos[0] >= self.dims[0]:
+            return True
+        if pos[1] < 0 or pos[1] >= self.dims[1]:
+            return True
+        return False
+
+    def get_unoccupied(self):
+        points = set()
+        for x in range(self.dims[0]):
+            for y in range(self.dims[1]):
+                points.add((x, y))
+        for snake in self.snakes:
+            for point in snake.body:
+                points.remove(point)
+        for point in self.foods:
+            points.remove(point)
+        return points
+
+    def spawn_food(self, n):
+        for _ in range(n):
+            unoccupied = list(self.get_unoccupied())
+            if len(unoccupied) > 0:
+                food = unoccupied[random.randint(0, len(unoccupied) - 1)]
+                self.foods.add(food)
+
+    def maybe_spawn_food(self):
+        if len(self.foods) < self.min_food:
+            self.spawn_food(self.min_food - len(self.foods))
+        elif random.randint(0, 99) < self.food_chance:
+            self.spawn_food(1)
+
+    def step(self, actions):
+        tails = []
+        for snake, action in zip(self.snakes, actions):
+            snake.body.insert(0, tuple(map(operator.add, snake.body[0], action_dir[action])))
+            tails.append(snake.body.pop())
+            snake.health -= 1
+        
+        eaten = set()
+        for snake, tail in zip(self.snakes, tails):
+            if snake.body[0] in self.foods:
+                snake.health = self.snake_max_hp
+                snake.body.append(tail)
+                eaten.add(snake.body[0])
+        self.foods = self.foods.difference(eaten)
+        
+        self.maybe_spawn_food()
+
+        elims = []
+        for snake in self.snakes:
+            elim = False
+            if snake.health <= 0:
+                elim = True
+            if self.out_of_bounds(snake.body[0]):
+                elim = True
+            for other in self.snakes:
+                if snake.body[0] in other.body[1:]:
+                    elim = True
+                if snake != other and snake.body[0] == other.body[0] and len(snake.body) <= len(other.body):
+                    elim = True
+            elims.append(elim)
+        self.snakes = [snake for snake, elim in zip(self.snakes, elims) if not elim]
