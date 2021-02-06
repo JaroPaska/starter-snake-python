@@ -217,7 +217,7 @@ class GravityBot(Bot):
     w = data['board']['width']
     tmp = [ [ [0,0] for _ in range(data['board']['width']) ] for _ in range(data['board']['height']) ]
 
-    if sy >= 0 and sy < h and sx >= 0 and sy < w:
+    if sy >= 0 and sy < h and sx >= 0 and sx < w:
       tmp[sy][sx] = val
 
     q = deque()
