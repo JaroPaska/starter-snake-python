@@ -291,7 +291,6 @@ class GameState:
                 for other in self.snakes:
                     if dest in other.body[0:-1]:
                         ok[action] = False
-            print('None ok!')
             if not any(ok):
                 ok[0] = True
             moves.append([action for action in range(4) if ok[action]])  
@@ -300,9 +299,9 @@ class GameState:
 class MonteCarloBot(Bot):
     def play_out(self, gs, depth, idn, action=None):
         if len(gs.snakes) == 0:
-            return 0
-        if idn not in [snake.idn for snake in gs.snakes]:
             return 0.5
+        if idn not in [snake.idn for snake in gs.snakes]:
+            return 0
         if len(gs.snakes) == 1:
             return 1
         if depth == 0:
@@ -326,7 +325,7 @@ class MonteCarloBot(Bot):
         counts = [0, 0, 0, 0]
         for _ in range(50):
             first_move = random.randint(0, 3)
-            result = self.play_out(GameState.from_data(data), 20, idn, first_move)
+            result = self.play_out(GameState.from_data(data), 50, idn, first_move)
             wins[first_move] += result
             counts[first_move] += 1
 
