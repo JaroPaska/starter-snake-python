@@ -106,7 +106,7 @@ def add_heads(data, graph):
 
 # modifies graph with dist/src, returns closest found food
 # if risk_heads = False, treat squares next to bigger enemy snake heads as blocked
-def find_food(data, graph, risk_heads = True):
+def find_food(data, graph, risk_heads = True, req_space = 15):
   h = data['board']['height']
   w = data['board']['width']
 
@@ -122,9 +122,6 @@ def find_food(data, graph, risk_heads = True):
   q.append(sx)
 
   graph[sy][sx].dist = 0
-
-  best_food_distance = UNREACHABLE
-  best_food = (-1,-1)
 
   while len(q):
     y = q.popleft()
@@ -145,7 +142,7 @@ def find_food(data, graph, risk_heads = True):
       q.append(ny)
       q.append(nx)
 
-      if graph[ny][nx].char == 'o' and best_food_distance == UNREACHABLE:
+      if graph[ny][nx].char == 'o' and best_food_distance == UNREACHABLE and count_space(graph, ny, nx) >= req_space:
         best_food_distance = graph[ny][nx].dist
         best_food = (ny,nx)
 
@@ -168,11 +165,11 @@ class EatBot(Bot):
 
     # BFS on the graph being careful
     graph = make_graph(h,w,board)
-    best_food = find_food(data, graph, risk_heads = False)
+    best_food = find_food(data, graph, risk_heads = False, req_space = 20)
     # if careful didn't work, and we're desperate, try not being careful
     if best_food == (-1,-1) and data['you']['health'] <= (h+w)//1.47:
       graph = make_graph(h,w,board)
-      best_food = find_food(data,graph, risk_heads = True)
+      best_food = find_food(data,graph, risk_heads = True, req_space = min(10,data['you']['health']))
 
 
     sy = data['you']['head']['y']
