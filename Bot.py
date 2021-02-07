@@ -349,23 +349,23 @@ class GameState:
 class MonteCarloBot(Bot):
     def play_out(self, gs, depth, idn):
         if len(gs.snakes) == 0:
-            return 0.5
+            return (0.5, None)
         me = None
         for i, snake in enumerate(gs.snakes):
             if snake.idn == idn:
                 me = i
         if me == None:
-            return 0
+            return (0, None)
         if len(gs.snakes) == 1:
-            return 1
+            return (1, None)
         if depth == 0:
-            return 0.5
+            return (0.5, None)
         
         moves = gs.ok_moves()
         for i in range(len(moves)):
             moves[i] = random.choice(moves[i])
         gs.step(moves)
-        return self.play_out(gs, depth - 1, idn), moves[me]
+        return self.play_out(gs, depth - 1, idn)[0], moves[me]
 
     def move(self, data):
         depth = data['board']['width'] + data['board']['height'] - 2
@@ -382,42 +382,43 @@ class MonteCarloBot(Bot):
         best = wr.index(max(wr))
         return action_name[best]
 
-'''data = {
-    'board': {
-        'height': 11,
-        'width': 11,
-        'food': [
-            {'x': 0, 'y': 0},
-        ],
-        'snakes': [
-            {
-                'id': 'me',
-                'health': 3,
-                'body': [
-                    {'x': 1, 'y': 0},
-                    {'x': 2, 'y': 0},
-                    {'x': 3, 'y': 0}
-                ]
-            }, {
-                'id': 'him',
-                'health': 100,
-                'body': [
-                    {'x': 1, 'y': 5},
-                    {'x': 2, 'y': 5},
-                    {'x': 3, 'y': 5}
-                ]
-            }
-        ]
-    },
-    'you': {
-        'id': 'me'
+if __name__ == '__main__':
+    data = {
+        'board': {
+            'height': 11,
+            'width': 11,
+            'food': [
+                {'x': 0, 'y': 0},
+            ],
+            'snakes': [
+                {
+                    'id': 'me',
+                    'health': 3,
+                    'body': [
+                        {'x': 1, 'y': 0},
+                        {'x': 2, 'y': 0},
+                        {'x': 3, 'y': 0}
+                    ]
+                }, {
+                    'id': 'him',
+                    'health': 100,
+                    'body': [
+                        {'x': 1, 'y': 5},
+                        {'x': 2, 'y': 5},
+                        {'x': 3, 'y': 5}
+                    ]
+                }
+            ]
+        },
+        'you': {
+            'id': 'me'
+        }
     }
-}
 
-bot = MonteCarloBot()
-start = time.time()
-print(bot.move(data))
-print(time.time() - start)'''
+    bot = MonteCarloBot()
+    start = time.time()
+    print(bot.move(data))
+    print(time.time() - start)
         
 class GravityBot(Bot):
 
