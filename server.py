@@ -66,7 +66,7 @@ import sys
 if __name__ == "__main__":
     bot_arg = sys.argv[1]
     server = Battlesnake()
-    cherrypy.config.update({"server.socket_host": "192.168.0.128"})
+    cherrypy.config.update({"server.socket_host": "45.76.227.122"})
     cherrypy.config.update(
         {"server.socket_port": int(os.environ.get("PORT", "55822")),}
     )

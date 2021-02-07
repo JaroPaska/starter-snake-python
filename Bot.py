@@ -372,11 +372,10 @@ class MonteCarloBot(Bot):
         return self.play_out(gs, depth - 1, idn)
 
     def move(self, data):
-        return 'right'
         idn = data['you']['id']
         wins = [0, 0, 0, 0]
         counts = [0, 0, 0, 0]
-        for _ in range(500):
+        for _ in range(320):
             first_move = random.randint(0, 3)
             result = self.play_out(GameState.from_data(data), 50, idn, first_move)
             wins[first_move] += result
