@@ -371,7 +371,7 @@ class GameState:
 class MonteCarloBot(Bot):
     def play_out(self, gs, depth, idn):
         if len(gs.snakes) == 0:
-            return (0.5, None)
+            return (0, None)
         me = None
         for i, snake in enumerate(gs.snakes):
             if snake.idn == idn:
@@ -381,7 +381,7 @@ class MonteCarloBot(Bot):
         if len(gs.snakes) == 1:
             return (1, None)
         if depth == 0:
-            return (0.5, None)
+            return (1 / len(gs.snakes), None)
         
         moves = gs.ok_moves()
         for i in range(len(moves)):
