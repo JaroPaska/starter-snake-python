@@ -347,10 +347,14 @@ class GameState:
         return moves
 
 class MonteCarloBot(Bot):
-    def play_out(self, gs, depth, idn, action=None):
+    def play_out(self, gs, depth, idn):
         if len(gs.snakes) == 0:
             return 0.5
-        if idn not in [snake.idn for snake in gs.snakes]:
+        me = None
+        for i, snake in enumerate(gs.snakes):
+            if snake.idn == idn:
+                me = i
+        if me == None:
             return 0
         if len(gs.snakes) == 1:
             return 1
@@ -360,14 +364,8 @@ class MonteCarloBot(Bot):
         moves = gs.ok_moves()
         for i in range(len(moves)):
             moves[i] = random.choice(moves[i])
-        
-        if action != None:
-            for i, snake in enumerate(gs.snakes):
-                if snake.idn == idn:
-                    moves[i] = action
-
         gs.step(moves)
-        return self.play_out(gs, depth - 1, idn)
+        return self.play_out(gs, depth - 1, idn), moves[me]
 
     def move(self, data):
         depth = data['board']['width'] + data['board']['height'] - 2
@@ -375,11 +373,10 @@ class MonteCarloBot(Bot):
         wins = [0, 0, 0, 0]
         counts = [0, 0, 0, 0]
         start = time.time()
-        while time.time() - start < 0.25:
-            first_move = random.randint(0, 3)
-            result = self.play_out(GameState.from_data(data), depth, idn, first_move)
-            wins[first_move] += result
-            counts[first_move] += 1
+        while time.time() - start < 0.33:
+            result, action = self.play_out(GameState.from_data(data), depth, idn)
+            wins[action] += result
+            counts[action] += 1
         print(counts)
         wr = [-1 if counts[i] == 0 else wins[i] / counts[i] for i in range(4)]
         best = wr.index(max(wr))
