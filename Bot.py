@@ -1,5 +1,6 @@
 import operator
 import random
+import time
 
 from collections import deque
 
@@ -369,15 +370,17 @@ class MonteCarloBot(Bot):
         return self.play_out(gs, depth - 1, idn)
 
     def move(self, data):
+        depth = data['board']['width'] + data['board']['height'] - 2
         idn = data['you']['id']
         wins = [0, 0, 0, 0]
         counts = [0, 0, 0, 0]
-        for _ in range(320):
+        start = time.time()
+        while time.time() - start < 0.25:
             first_move = random.randint(0, 3)
-            result = self.play_out(GameState.from_data(data), 50, idn, first_move)
+            result = self.play_out(GameState.from_data(data), depth, idn, first_move)
             wins[first_move] += result
             counts[first_move] += 1
-
+        print(counts)
         wr = [-1 if counts[i] == 0 else wins[i] / counts[i] for i in range(4)]
         best = wr.index(max(wr))
         return action_name[best]
@@ -414,7 +417,6 @@ class MonteCarloBot(Bot):
     }
 }
 
-import time
 bot = MonteCarloBot()
 start = time.time()
 print(bot.move(data))
