@@ -334,6 +334,7 @@ class GameState:
         moves = []
         for snake in self.snakes:
             ok = [True] * 4
+            food_ok = [True] * 4
             for action in range(4):
                 dest = tuple(map(operator.add, snake.body[0], action_dir[action]))
                 if self.out_of_bounds(dest):
@@ -341,10 +342,31 @@ class GameState:
                 for other in self.snakes:
                     if dest in other.body[0:-1]:
                         ok[action] = False
+
+                food_dist = min(map(lambda food: abs(food[0] - dest[0]) + abs(food[1] - dest[1]), self.foods))
+                if food_dist > snake.health - 1:
+                    food_ok[action] = False
+            both_ok = [ok[action] and food_ok[action] for action in range(4)]
+            if any(both_ok):
+                ok = both_ok
             if not any(ok):
-                ok[0] = True
-            moves.append([action for action in range(4) if ok[action]])  
+                ok = [True for _ in range(4)]
+            moves.append([action for action in range(4) if ok[action]])
         return moves
+
+    '''def control(self):
+        return
+        t = 0
+        occupied = [[False for _ in range(self.dims[1])] for _ in range(self.dims[0])]
+        control = [[None for _ in range(self.dims[1])] for _ in range(self.dims[0])]
+        explore = []
+        for i, snake in enumerate(self.snakes):
+            for point in snake.body:
+                occupied[point[0]][point[1]] = True
+            control[snake.body[0][0]][snake.body[0][1]] = i
+            explore.append(snake.body[0])'''
+
+
 
 class MonteCarloBot(Bot):
     def play_out(self, gs, depth, idn):
